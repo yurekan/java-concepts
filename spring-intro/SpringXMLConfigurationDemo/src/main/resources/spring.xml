@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- bean definitions here -->
+
+    <!-- bean alien1 and alien2 creates the object of alien twice when the application starts irrespective of whether this object-->
+    <!-- is used or not. alien1 and alien2 refers to different object references, because by default the bean scope is singleton.-->
+
+<!--    <bean id="alien1" class="com.example.Alien">-->
+<!--    </bean>-->
+<!--    -->
+<!--    <bean id="alien2" class="com.example.Alien">-->
+<!--    </bean>-->
+
+<!--    Setter Injection is a type of Dependency Injection where Spring injects dependencies through setter methods.-->
+<!--    we use value for primitive types and ref for reference types-->
+<!--    For reference types Sprig wires the reference which we configured through beans-->
+
+<!--    Autowiring is a feature of the Spring Framework that automatically injects the required dependencies (objects) into a bean.-->
+<!--    - byName: Spring searches for a bean whose ID matches the property name of the dependent class.-->
+<!--    - byType: Spring searches for a bean whose class type matches the property's data type.-->
+<!--    -->
+<!--    if property or constructor is mentioned in the bean config, it is given priority than the autowire feature.-->
+    <bean id="alien" class="com.example.Alien" autowire="byType">
+<!--        assigning the property of the class using setter injection-->
+<!--        <property name="age" value="21"></property>-->
+<!--        <property name="lap" ref="laptop"></property>-->
+
+<!--        assigning the property of the class using constructor injection-->
+<!--        by default the value assignment takes place based on the sequence in which it is defined-->
+<!--        <constructor-arg value="21" />-->
+<!--        <constructor-arg ref="laptop" />-->
+
+<!--        to be more specific about the variable you assign, you can use name attribute.-->
+<!--        But you have to maintain the sequence in which it is getting assigned. -->
+<!--        <constructor-arg name="age" value="21" />-->
+<!--        <constructor-arg name="lap" ref="laptop" />-->
+
+<!--        If you prefer not to depend on the sequence you can use index attribute-->
+<!--        helpful when you have more than one property with same data type-->
+<!--        @ConstructorProperties tells Spring which constructor parameter corresponds to which bean property.-->
+<!--        This is especially useful when you want to use named <constructor-arg> elements in XML configuration in any order.-->
+<!--        <constructor-arg index="1" ref="desktop" />-->
+<!--        <constructor-arg index="0" value="21" />-->
+
+        <property name="age" value="21"></property>
+        <property name="com" ref="com1"></property>
+    </bean>
+
+<!--    primary bean is used to give preference to one bean when multiple beans of the same type are available in the Spring container.-->
+    <bean id="com1" class="com.example.Laptop" primary="true">
+    </bean>
+
+<!--    lazy init using singleton bean allows you to create the object whenever it is needed and not during the application startup.-->
+<!--    Both prototype bean and lazy init configured singleton bean has same behavior in when the object is created. The difference-->
+<!--    lies in how the object is created.-->
+    <bean id="com2" class="com.example.Desktop" lazy-init="true">
+    </bean>
+
+<!--    An Inner Bean in Spring is a bean that is declared inside another bean's configuration. It also us to have to control over the-->
+<!--    bean's visibility to the entire application. When a inner bean is created, it is accessible only to the parent bean, not to the-->
+<!--    entire application-->
+
+<!--    <bean id="alien" class="com.example.Alien" autowire="byType">-->
+<!--        <property name="age" value="21"></property>-->
+<!--        <property name="com">-->
+<!--            <bean id="com1" class="com.example.Laptop" primary="true">-->
+<!--            </bean>-->
+<!--        </property>-->
+<!--    </bean>-->
+</beans>
