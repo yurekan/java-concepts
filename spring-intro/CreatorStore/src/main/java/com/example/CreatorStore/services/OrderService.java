@@ -5,10 +5,13 @@ import com.example.CreatorStore.dto.OrderRequest;
 import com.example.CreatorStore.entities.Order;
 import com.example.CreatorStore.entities.OrderItem;
 import com.example.CreatorStore.entities.Product;
+import com.example.CreatorStore.exceptions.InsufficientStockException;
+import com.example.CreatorStore.exceptions.ResourceNotFoundException;
 import com.example.CreatorStore.repositories.OrderRepository;
 import com.example.CreatorStore.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -21,6 +24,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
 
+    @Transactional
     public Order createOrder(OrderRequest orderRequest) {
         BigDecimal totalPrice = BigDecimal.ZERO;
         List<OrderItem> orderItemList = new ArrayList<>();
@@ -30,17 +34,18 @@ public class OrderService {
         order.setCustomerEmail(orderRequest.getCustomerEmail());
         order.setStatus("CONFIRMED");
 
-        for(OrderItemRequest orderItemRequest : orderRequest.getOrderItems()) {
+        for (OrderItemRequest orderItemRequest : orderRequest.getOrderItems()) {
             // Check if Product is present
-            Product product = productRepository.findById(
-                    orderItemRequest.getProductId()
-                    ).orElseThrow(() -> new RuntimeException("Product not found with id " +
-                            orderItemRequest.getProductId()));
+            Product product = productRepository.findById(orderItemRequest.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Product not found with id " + orderItemRequest.getProductId()));
 
             // Check for product stock
-            if(product.getStockQuantity() < orderItemRequest.getQuantity()) {
-                throw new RuntimeException("Product stock quantity less than " +
-                        orderItemRequest.getQuantity());
+            if (product.getStockQuantity() < orderItemRequest.getQuantity()) {
+                throw new InsufficientStockException(
+                        "Insufficient stock for product '" + product.getName() +
+                                "' (ID: " + product.getId() + "). Available: " +
+                                product.getStockQuantity() + ", requested: " + orderItemRequest.getQuantity());
             }
 
             // Calculate total price
@@ -49,14 +54,11 @@ public class OrderService {
 
             totalPrice = totalPrice.add(priceOfItem);
 
-            // Update the product table with latest stock quantity
-            product.setStockQuantity(
-                    product.getStockQuantity() -  orderItemRequest.getQuantity()
-            );
-
+            // Update the product stock quantity
+            product.setStockQuantity(product.getStockQuantity() - orderItemRequest.getQuantity());
             productRepository.save(product);
 
-            // Builder pattern to make obj
+            // Build OrderItem
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(product)
@@ -71,5 +73,16 @@ public class OrderService {
         order.setOrderItems(orderItemList);
 
         return orderRepository.save(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Order getOrderById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id " + id));
     }
 }
